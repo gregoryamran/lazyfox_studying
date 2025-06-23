@@ -266,3 +266,16 @@ INSERT INTO transactions(Amount,Date) VALUES (-50,'2020-03-17');
 INSERT INTO transactions(Amount,Date) VALUES (200,'2020-10-10');
 INSERT INTO transactions(Amount,Date) VALUES (-200,'2020-10-10');
 
+-- 
+
+
+select sum(t.balance) 
+    - 5 * count(*) filter(where coalesce(t.cnt, 0) < 3 or coalesce(t.debit, 0) < 100) as balance
+from generate_series(date '2020-01-01', date '2020-12-01', '1 month') as d(dt)
+left join (
+    select date_trunc('month', date) as dt, count(*) cnt, sum(amount) as balance,
+        sum(-amount) filter(where amount < 0) as debit
+    from transactions t 
+    group by date_trunc('month', date)
+) t on t.dt = d.dt
+
